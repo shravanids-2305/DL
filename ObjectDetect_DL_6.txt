@@ -1,0 +1,574 @@
+%pip install pandas
+import os
+
+os.makedirs("VGG16_Object_Detection/dataset/images", exist_ok=True)
+
+print("Folder structure created successfully!")
+------------------------------------------------------------------------------------
+for root, dirs, files in os.walk("VGG16_Object_Detection"):
+    print(root)
+------------------------------------------------------------------------------------
+import pandas as pd
+
+columns = ["image", "xmin", "ymin", "xmax", "ymax", "class"]
+
+df = pd.DataFrame(columns=columns)
+
+df.to_csv(
+    "VGG16_Object_Detection/dataset/annotations.csv",
+    index=False
+)
+
+print("annotations.csv created successfully!")
+------------------------------------------------------------------------------------
+from PIL import Image
+import os
+
+IMAGE_DIR = "VGG16_Object_Detection/dataset/images"
+
+images = [
+    file for file in os.listdir(IMAGE_DIR)
+    if file.lower().endswith((".jpg", ".jpeg", ".png"))
+]
+
+for filename in images:
+    path = os.path.join(IMAGE_DIR, filename)
+
+    img = Image.open(path)
+
+    print(filename, "Size:", img.size)
+------------------------------------------------------------------------------------
+import matplotlib.pyplot as plt
+from PIL import Image
+import os
+
+IMAGE_DIR = "VGG16_Object_Detection/dataset/images"
+
+images = ["cat1.jpeg", "cat2.jpeg", "dog1.jpeg", "dog2.png"]
+
+plt.figure(figsize=(12, 8))
+
+for i, filename in enumerate(images):
+
+    image_path = os.path.join(IMAGE_DIR, filename)
+
+    img = Image.open(image_path).convert("RGB")
+
+    plt.subplot(2, 2, i + 1)
+    plt.imshow(img)
+    plt.title(filename)
+    plt.axis("on")
+
+plt.tight_layout()
+plt.show()
+------------------------------------------------------------------------------------
+from PIL import Image
+import os
+
+IMAGE_DIR = "VGG16_Object_Detection/dataset/images"
+
+images = ["cat1.jpeg", "cat2.jpeg", "dog1.jpeg", "dog2.png"]
+
+for filename in images:
+    img = Image.open(os.path.join(IMAGE_DIR, filename))
+
+    print(filename)
+    print("Width:", img.width)
+    print("Height:", img.height)
+    print("-------------------")
+------------------------------------------------------------------------------------
+import matplotlib.pyplot as plt
+import numpy as np
+from PIL import Image
+import os
+
+plt.figure(figsize=(14, 10))
+
+for i, filename in enumerate(images):
+
+    img = Image.open(os.path.join(IMAGE_DIR, filename)).convert("RGB")
+
+    plt.subplot(2, 2, i + 1)
+    plt.imshow(img)
+    plt.title(filename)
+
+    width, height = img.size
+
+    plt.xticks(np.linspace(0, width, 6, dtype=int))
+    plt.yticks(np.linspace(0, height, 6, dtype=int))
+
+    plt.grid(True)
+    plt.xlabel("X coordinates")
+    plt.ylabel("Y coordinates")
+
+plt.tight_layout()
+plt.show()
+------------------------------------------------------------------------------------
+import pandas as pd
+import os
+
+annotations = [
+    ["cat1.jpeg", 29, 10, 120, 148, "cat"],
+    ["cat2.jpeg", 70, 80, 400, 410, "cat"],
+    ["dog1.jpeg", 35, 10, 330, 355, "dog"],
+    ["dog2.png", 0, 0, 320, 465, "dog"]
+]
+
+columns = ["image", "xmin", "ymin", "xmax", "ymax", "class"]
+
+df = pd.DataFrame(annotations, columns=columns)
+
+CSV_PATH = "VGG16_Object_Detection/dataset/annotations.csv"
+
+df.to_csv(CSV_PATH, index=False)
+
+print("Annotations CSV created successfully!")
+display(df)
+------------------------------------------------------------------------------------
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+from PIL import Image
+import os
+
+IMAGE_DIR = "VGG16_Object_Detection/dataset/images"
+
+fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+
+for i, row in df.iterrows():
+
+    img = Image.open(
+        os.path.join(IMAGE_DIR, row["image"])
+    ).convert("RGB")
+
+    ax = axes[i // 2, i % 2]
+
+    ax.imshow(img)
+
+    rect = patches.Rectangle(
+        (row["xmin"], row["ymin"]),
+        row["xmax"] - row["xmin"],
+        row["ymax"] - row["ymin"],
+        linewidth=2,
+        edgecolor="red",
+        facecolor="none"
+    )
+
+    ax.add_patch(rect)
+    ax.set_title(row["image"] + " - " + row["class"])
+    ax.axis("on")
+
+plt.tight_layout()
+plt.show()
+------------------------------------------------------------------------------------
+%pip install tensorflow numpy pandas matplotlib pillow
+------------------------------------------------------------------------------------
+import tensorflow as tf
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import os
+
+from PIL import Image
+from tensorflow.keras.applications.vgg16 import VGG16, preprocess_input
+from tensorflow.keras.layers import Input, GlobalAveragePooling2D
+from tensorflow.keras.layers import Dense, Dropout
+from tensorflow.keras.models import Model
+
+print("TensorFlow Version:", tf.__version__)
+print("All libraries imported successfully!")
+------------------------------------------------------------------------------------
+CSV_PATH = "VGG16_Object_Detection/dataset/annotations.csv"
+
+df = pd.read_csv(CSV_PATH)
+
+print("Annotations loaded successfully!")
+display(df)
+------------------------------------------------------------------------------------
+IMAGE_DIR = "VGG16_Object_Detection/dataset/images"
+
+image_size = 224
+
+class_names = sorted(df["class"].unique())
+
+class_mapping = {
+    name: index for index, name in enumerate(class_names)
+}
+
+print("Class Mapping:", class_mapping)
+------------------------------------------------------------------------------------
+X = []
+y_class = []
+y_box = []
+
+for index, row in df.iterrows():
+
+    image_path = os.path.join(IMAGE_DIR, row["image"])
+
+    img = Image.open(image_path).convert("RGB")
+
+    original_width, original_height = img.size
+
+    # Resize image
+    img = img.resize((image_size, image_size))
+
+    # Convert image to array
+    img_array = np.array(img)
+
+    X.append(img_array)
+
+    # Convert class name to number
+    y_class.append(class_mapping[row["class"]])
+
+    # Normalize bounding box coordinates
+    xmin = row["xmin"] / original_width
+    ymin = row["ymin"] / original_height
+    xmax = row["xmax"] / original_width
+    ymax = row["ymax"] / original_height
+
+    y_box.append([xmin, ymin, xmax, ymax])
+
+X = np.array(X, dtype=np.float32)
+y_class = np.array(y_class, dtype=np.int32)
+y_box = np.array(y_box, dtype=np.float32)
+
+print("Image array shape:", X.shape)
+print("Class labels shape:", y_class.shape)
+print("Bounding boxes shape:", y_box.shape)
+------------------------------------------------------------------------------------
+X = preprocess_input(X)
+
+print("VGG16 preprocessing completed!")
+------------------------------------------------------------------------------------
+base_model = VGG16(
+    weights="imagenet",
+    include_top=False,
+    input_shape=(224, 224, 3)
+)
+
+print("Pre-trained VGG16 model loaded successfully!")
+------------------------------------------------------------------------------------
+base_model.trainable = False
+
+print("VGG16 layers frozen successfully!")
+
+for layer in base_model.layers:
+    print(layer.name, layer.trainable)
+------------------------------------------------------------------------------------
+input_layer = Input(shape=(224, 224, 3))
+
+# VGG16 feature extraction
+features = base_model(input_layer)
+
+# Custom classifier
+x = GlobalAveragePooling2D()(features)
+
+x = Dense(256, activation="relu")(x)
+
+x = Dropout(0.5)(x)
+
+x = Dense(128, activation="relu")(x)
+
+# Classification output
+class_output = Dense(
+    len(class_names),
+    activation="softmax",
+    name="class_output"
+)(x)
+
+# Bounding box output
+box_output = Dense(
+    4,
+    activation="sigmoid",
+    name="box_output"
+)(x)
+
+# Complete model
+model = Model(
+    inputs=input_layer,
+    outputs=[class_output, box_output]
+)
+
+print("Custom object detection model created!")
+------------------------------------------------------------------------------------
+model.summary()
+------------------------------------------------------------------------------------
+model.compile(
+    optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
+
+    loss={
+        "class_output": "sparse_categorical_crossentropy",
+        "box_output": "mse"
+    },
+
+    metrics={
+        "class_output": ["accuracy"]
+    }
+)
+
+print("Model compiled successfully!")
+------------------------------------------------------------------------------------
+history = model.fit(
+    X,
+    {
+        "class_output": y_class,
+        "box_output": y_box
+    },
+    epochs=20,
+    batch_size=2,
+    verbose=1
+)
+------------------------------------------------------------------------------------
+base_model.trainable = True
+
+for layer in base_model.layers:
+
+    if layer.name.startswith("block5"):
+        layer.trainable = True
+
+    else:
+        layer.trainable = False
+
+print("Last VGG16 convolutional block unfrozen!")
+
+for layer in base_model.layers:
+    print(layer.name, layer.trainable)
+------------------------------------------------------------------------------------
+model.compile(
+    optimizer=tf.keras.optimizers.Adam(learning_rate=0.00001),
+
+    loss={
+        "class_output": "sparse_categorical_crossentropy",
+        "box_output": "mse"
+    },
+
+    metrics={
+        "class_output": ["accuracy"]
+    }
+)
+
+print("Model recompiled for fine-tuning!")
+------------------------------------------------------------------------------------
+base_model.trainable = False
+
+print("VGG16 layers frozen successfully!")
+
+for layer in base_model.layers:
+    print(layer.name, layer.trainable)
+------------------------------------------------------------------------------------
+input_layer = Input(shape=(224, 224, 3))
+
+# Extract features using VGG16
+features = base_model(input_layer)
+
+# Custom classifier
+x = GlobalAveragePooling2D()(features)
+x = Dense(256, activation="relu")(x)
+x = Dropout(0.5)(x)
+x = Dense(128, activation="relu")(x)
+
+# Predict cat or dog
+class_output = Dense(
+    len(class_names),
+    activation="softmax",
+    name="class_output"
+)(x)
+
+# Predict bounding box
+box_output = Dense(
+    4,
+    activation="sigmoid",
+    name="box_output"
+)(x)
+
+model = Model(
+    inputs=input_layer,
+    outputs=[class_output, box_output]
+)
+
+print("Object detection model created successfully!")
+------------------------------------------------------------------------------------
+model.summary()
+------------------------------------------------------------------------------------
+model.compile(
+    optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
+
+    loss={
+        "class_output": "sparse_categorical_crossentropy",
+        "box_output": "mse"
+    },
+
+    metrics={
+        "class_output": ["accuracy"]
+    }
+)
+
+print("Model compiled successfully!")
+------------------------------------------------------------------------------------
+history = model.fit(
+    X,
+    {
+        "class_output": y_class,
+        "box_output": y_box
+    },
+    epochs=20,
+    batch_size=2,
+    verbose=1
+)
+------------------------------------------------------------------------------------
+base_model.trainable = True
+
+for layer in base_model.layers:
+
+    if layer.name.startswith("block5"):
+        layer.trainable = True
+    else:
+        layer.trainable = False
+
+print("Last convolutional block unfrozen!")
+
+for layer in base_model.layers:
+    print(layer.name, layer.trainable)
+------------------------------------------------------------------------------------
+history_fine = model.fit(
+    X,
+    {
+        "class_output": y_class,
+        "box_output": y_box
+    },
+    epochs=10,
+    batch_size=2,
+    verbose=1
+)
+------------------------------------------------------------------------------------
+plt.figure(figsize=(8, 5))
+
+plt.plot(
+    history.history["class_output_accuracy"],
+    label="Initial Training Accuracy"
+)
+
+plt.plot(
+    history_fine.history["class_output_accuracy"],
+    label="Fine-tuning Accuracy"
+)
+
+plt.title("VGG16 Model Training Accuracy")
+plt.xlabel("Epochs")
+plt.ylabel("Accuracy")
+plt.legend()
+plt.grid(True)
+
+plt.show()
+------------------------------------------------------------------------------------
+plt.figure(figsize=(8, 5))
+
+plt.plot(history.history["loss"], label="Initial Training Loss")
+plt.plot(history_fine.history["loss"], label="Fine-tuning Loss")
+
+plt.title("VGG16 Model Training Loss")
+plt.xlabel("Epochs")
+plt.ylabel("Loss")
+plt.legend()
+plt.grid(True)
+
+plt.show()
+------------------------------------------------------------------------------------
+predictions = model.predict(X)
+
+class_predictions = predictions[0]
+box_predictions = predictions[1]
+
+print("Predictions completed!")
+------------------------------------------------------------------------------------
+fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+
+for i, row in df.iterrows():
+
+    img = Image.open(
+        os.path.join(IMAGE_DIR, row["image"])
+    ).convert("RGB")
+
+    width, height = img.size
+
+    predicted_class_index = np.argmax(class_predictions[i])
+    predicted_class = class_names[predicted_class_index]
+
+    xmin, ymin, xmax, ymax = box_predictions[i]
+
+    xmin = int(xmin * width)
+    ymin = int(ymin * height)
+    xmax = int(xmax * width)
+    ymax = int(ymax * height)
+
+    ax = axes[i // 2, i % 2]
+
+    ax.imshow(img)
+
+    rect = patches.Rectangle(
+        (xmin, ymin),
+        xmax - xmin,
+        ymax - ymin,
+        linewidth=2,
+        edgecolor="red",
+        facecolor="none"
+    )
+
+    ax.add_patch(rect)
+
+    ax.set_title("Predicted: " + predicted_class)
+    ax.axis("on")
+
+plt.tight_layout()
+plt.show()
+------------------------------------------------------------------------------------
+model.save("VGG16_Object_Detection_Model.keras")
+
+print("Model saved successfully!")
+------------------------------------------------------------------------------------
+from tensorflow.keras.models import load_model
+
+saved_model = load_model("VGG16_Object_Detection_Model.keras")
+
+print("Saved model loaded successfully!")
+------------------------------------------------------------------------------------
+test_image = X[0:1]
+
+prediction = saved_model.predict(test_image)
+
+predicted_class_index = np.argmax(prediction[0][0])
+predicted_class = class_names[predicted_class_index]
+
+predicted_box = prediction[1][0]
+
+print("Predicted Class:", predicted_class)
+print("Predicted Bounding Box:", predicted_box)
+------------------------------------------------------------------------------------
+img = Image.open(
+    os.path.join(IMAGE_DIR, df.iloc[0]["image"])
+).convert("RGB")
+
+width, height = img.size
+
+xmin, ymin, xmax, ymax = predicted_box
+
+xmin = int(xmin * width)
+ymin = int(ymin * height)
+xmax = int(xmax * width)
+ymax = int(ymax * height)
+
+plt.figure(figsize=(7, 6))
+plt.imshow(img)
+
+rect = patches.Rectangle(
+    (xmin, ymin),
+    xmax - xmin,
+    ymax - ymin,
+    linewidth=3,
+    edgecolor="red",
+    facecolor="none"
+)
+
+plt.gca().add_patch(rect)
+plt.title("Predicted Object: " + predicted_class)
+plt.axis("on")
+plt.show()

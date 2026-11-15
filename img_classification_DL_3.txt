@@ -1,0 +1,143 @@
+%pip install tensorflow numpy matplotlib
+------------------------------------------------------------------------------------
+import tensorflow as tf
+import numpy as np
+import matplotlib.pyplot as plt
+------------------------------------------------------------------------------------
+import tensorflow as tf
+import numpy as np
+import matplotlib.pyplot as plt
+
+print("TensorFlow:", tf.__version__)
+print("NumPy:", np.__version__)
+print("Matplotlib:", plt.matplotlib.__version__)
+------------------------------------------------------------------------------------
+(x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
+------------------------------------------------------------------------------------
+print("Training images:", x_train.shape)
+print("Training labels:", y_train.shape)
+print("Testing images:", x_test.shape)
+print("Testing labels:", y_test.shape)
+------------------------------------------------------------------------------------
+x_train = x_train / 255.0
+x_test = x_test / 255.0
+------------------------------------------------------------------------------------
+plt.figure(figsize=(10, 5))
+
+for i in range(10):
+    plt.subplot(2, 5, i + 1)
+    plt.imshow(x_train[i])
+    plt.axis('off')
+
+plt.show()
+------------------------------------------------------------------------------------
+class_names = [
+    'airplane',
+    'automobile',
+    'bird',
+    'cat',
+    'deer',
+    'dog',
+    'frog',
+    'horse',
+    'ship',
+    'truck'
+]
+------------------------------------------------------------------------------------
+plt.imshow(x_train[0])
+plt.title(class_names[y_train[0][0]])
+plt.axis('off')
+plt.show()
+------------------------------------------------------------------------------------
+from tensorflow.keras import models, layers
+------------------------------------------------------------------------------------
+model = models.Sequential([
+    
+    layers.Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3)),
+    layers.MaxPooling2D((2, 2)),
+    
+    layers.Conv2D(64, (3, 3), activation='relu'),
+    layers.MaxPooling2D((2, 2)),
+    
+    layers.Flatten(),
+    
+    layers.Dense(64, activation='relu'),
+    
+    layers.Dense(10, activation='softmax')
+])
+------------------------------------------------------------------------------------
+layers.Conv2D(32, (3,3), activation='relu')
+------------------------------------------------------------------------------------
+layers.MaxPooling2D((2,2))
+------------------------------------------------------------------------------------
+layers.Flatten()
+------------------------------------------------------------------------------------
+layers.Dense(64, activation='relu')
+------------------------------------------------------------------------------------
+layers.Dense(10, activation='softmax')
+------------------------------------------------------------------------------------
+model.summary()
+------------------------------------------------------------------------------------
+model.compile(
+    optimizer='adam',
+    loss='sparse_categorical_crossentropy',
+    metrics=['accuracy']
+)
+------------------------------------------------------------------------------------
+history = model.fit(
+    x_train,
+    y_train,
+    epochs=10,
+    validation_data=(x_test, y_test)
+)
+------------------------------------------------------------------------------------
+test_loss, test_accuracy = model.evaluate(x_test, y_test)
+
+print("Test Loss:", test_loss)
+print("Test Accuracy:", test_accuracy)
+------------------------------------------------------------------------------------
+plt.plot(history.history['accuracy'])
+plt.plot(history.history['val_accuracy'])
+
+plt.title('Model Accuracy')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+
+plt.legend(['Training Accuracy', 'Validation Accuracy'])
+
+plt.show()
+------------------------------------------------------------------------------------
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+
+plt.title('Model Loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+
+plt.legend(['Training Loss', 'Validation Loss'])
+
+plt.show()
+------------------------------------------------------------------------------------
+predictions = model.predict(x_test)
+------------------------------------------------------------------------------------
+predicted_class = np.argmax(predictions[0])
+
+print("Predicted:", class_names[predicted_class])
+print("Actual:", class_names[y_test[0][0]])
+------------------------------------------------------------------------------------
+plt.imshow(x_test[0])
+plt.title(
+    "Predicted: " + class_names[predicted_class] +
+    "\nActual: " + class_names[y_test[0][0]]
+)
+plt.axis('off')
+plt.show()
+
+
+
+
+
+
+
+
+

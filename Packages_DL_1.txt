@@ -1,0 +1,123 @@
+import sys
+
+print("Python Version:", sys.version)
+-------------------------------------------------------------------------------------------------------------------
+%pip --version
+-------------------------------------------------------------------------------------------------------------------
+%pip install tensorflow keras
+-------------------------------------------------------------------------------------------------------------------
+%pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+-------------------------------------------------------------------------------------------------------------------
+print("Theano Installation Command:")
+print("pip install Theano")
+-------------------------------------------------------------------------------------------------------------------
+try:
+    import tensorflow as tf
+    print("TensorFlow imported successfully!")
+except Exception as e:
+    print("TensorFlow Error:", e)
+-------------------------------------------------------------------------------------------------------------------
+try:
+    import keras
+    print("Keras imported successfully!")
+except Exception as e:
+    print("Keras Error:", e)
+-------------------------------------------------------------------------------------------------------------------
+try:
+    import torch
+    print("PyTorch imported successfully!")
+    print("PyTorch Version:", torch.__version__)
+
+except Exception as e:
+    torch = None
+    print("PyTorch is not available on this system.")
+    print("Reason:", e)
+-------------------------------------------------------------------------------------------------------------------
+print("TensorFlow Version:", tf.__version__)
+-------------------------------------------------------------------------------------------------------------------
+print("Keras Version:", keras.__version__)
+-------------------------------------------------------------------------------------------------------------------
+if torch is not None:
+    print("PyTorch Version:", torch.__version__)
+else:
+    print("PyTorch version cannot be displayed.")
+-------------------------------------------------------------------------------------------------------------------
+print("Theano")
+print("Type: Deep Learning and Numerical Computation Library")
+print("Status: Discontinued")
+print("Installation Command: pip install Theano")
+-------------------------------------------------------------------------------------------------------------------
+a = tf.constant([[1, 2], [3, 4]])
+
+print("TensorFlow Tensor:")
+print(a)
+-------------------------------------------------------------------------------------------------------------------
+b = tf.constant([[5, 6], [7, 8]])
+
+result = tf.add(a, b)
+
+print("Addition:")
+print(result.numpy())
+-------------------------------------------------------------------------------------------------------------------
+from keras import layers
+
+model = keras.Sequential([
+    keras.Input(shape=(4,)),
+    layers.Dense(8, activation='relu'),
+    layers.Dense(1, activation='sigmoid')
+])
+
+print("Keras Model Created Successfully!")
+-------------------------------------------------------------------------------------------------------------------
+model.summary()
+-------------------------------------------------------------------------------------------------------------------
+if torch is not None:
+
+    a = torch.tensor([[1, 2], [3, 4]])
+
+    print("PyTorch Tensor:")
+    print(a)
+
+else:
+    print("PyTorch is blocked or unavailable.")
+    print("PyTorch tensor operation skipped.")
+-------------------------------------------------------------------------------------------------------------------
+if torch is not None:
+
+    b = torch.tensor([[5, 6], [7, 8]])
+
+    result = torch.add(a, b)
+
+    print("Addition:")
+    print(result)
+
+else:
+    print("PyTorch addition skipped.")
+-------------------------------------------------------------------------------------------------------------------
+
+print("DISTINCT FEATURES OF DEEP LEARNING PACKAGES")
+
+print("\n1. TENSORFLOW")
+print("- Open-source deep learning framework")
+print("- Supports GPU processing")
+print("- Automatic differentiation")
+print("- Used to build and train machine learning models")
+
+print("\n2. KERAS")
+print("- Simple and user-friendly API")
+print("- Easy model building")
+print("- Supports neural networks")
+print("- Works with TensorFlow backend")
+
+print("\n3. THEANO")
+print("- Supports symbolic computation")
+print("- Performs mathematical operations")
+print("- Supports automatic differentiation")
+print("- Supported GPU computing in legacy versions")
+
+print("\n4. PYTORCH")
+print("- Supports dynamic computational graphs")
+print("- Supports GPU processing")
+print("- Provides tensor operations")
+print("- Supports automatic differentiation")
+

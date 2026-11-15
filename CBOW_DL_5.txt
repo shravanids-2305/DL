@@ -1,0 +1,131 @@
+%pip install tensorflow numpy matplotlib
+------------------------------------------------------------------------------------
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Embedding, Dense, Flatten
+
+print("TensorFlow version:", tf.__version__)
+------------------------------------------------------------------------------------
+text = """
+machine learning is a powerful technology
+machine learning helps computers learn
+deep learning is a part of machine learning
+artificial intelligence uses machine learning
+"""
+------------------------------------------------------------------------------------
+words = text.lower().split()
+
+print(words)
+------------------------------------------------------------------------------------
+vocab = sorted(set(words))
+
+word_to_index = {word: i for i, word in enumerate(vocab)}
+index_to_word = {i: word for word, i in word_to_index.items()}
+
+print("Vocabulary:")
+print(word_to_index)
+------------------------------------------------------------------------------------
+encoded_words = [word_to_index[word] for word in words]
+
+print("Encoded words:")
+print(encoded_words)
+------------------------------------------------------------------------------------
+window_size = 2
+------------------------------------------------------------------------------------
+X = []
+y = []
+
+for i in range(window_size, len(encoded_words) - window_size):
+    context = (
+        encoded_words[i - window_size:i] +
+        encoded_words[i + 1:i + window_size + 1]
+    )
+    
+    target = encoded_words[i]
+    
+    X.append(context)
+    y.append(target)
+
+X = np.array(X)
+y = np.array(y)
+
+print("Training input shape:", X.shape)
+print("Training target shape:", y.shape)
+------------------------------------------------------------------------------------
+for i in range(min(10, len(X))):
+    context_words = [index_to_word[index] for index in X[i]]
+    target_word = index_to_word[y[i]]
+    
+    print("Context:", context_words)
+    print("Target :", target_word)
+    print()
+------------------------------------------------------------------------------------
+vocab_size = len(vocab)
+
+print("Vocabulary size:", vocab_size)
+------------------------------------------------------------------------------------
+model = Sequential([
+    Embedding(
+        input_dim=vocab_size,
+        output_dim=50,
+        input_length=2 * window_size
+    ),
+    
+    Flatten(),
+    
+    Dense(64, activation='relu'),
+    
+    Dense(vocab_size, activation='softmax')
+])
+------------------------------------------------------------------------------------
+model.summary()
+------------------------------------------------------------------------------------
+model.compile(
+    optimizer='adam',
+    loss='sparse_categorical_crossentropy',
+    metrics=['accuracy']
+)
+------------------------------------------------------------------------------------
+history = model.fit(
+    X,
+    y,
+    epochs=100,
+    verbose=1
+)
+------------------------------------------------------------------------------------
+embeddings = model.layers[0].get_weights()[0]
+
+print("Embedding shape:", embeddings.shape)
+------------------------------------------------------------------------------------
+word = "machine"
+
+word_index = word_to_index[word]
+
+print("Word:", word)
+print("Embedding:")
+print(embeddings[word_index])
+------------------------------------------------------------------------------------
+sample = X[0].reshape(1, -1)
+
+prediction = model.predict(sample)
+
+predicted_index = np.argmax(prediction)
+
+print("Context words:")
+
+for index in X[0]:
+    print(index_to_word[index], end=" ")
+
+print("\nPredicted word:", index_to_word[predicted_index])
+print("Actual word:", index_to_word[y[0]])
+------------------------------------------------------------------------------------
+import matplotlib.pyplot as plt
+
+plt.plot(history.history['loss'])
+
+plt.title("CBOW Training Loss")
+plt.xlabel("Epoch")
+plt.ylabel("Loss")
+
+plt.show()

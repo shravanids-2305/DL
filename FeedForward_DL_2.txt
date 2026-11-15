@@ -1,0 +1,103 @@
+import tensorflow as tf
+import numpy as np
+import matplotlib.pyplot as plt
+
+print("TensorFlow version:", tf.__version__)
+------------------------------------------------------------------------------------
+(x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
+------------------------------------------------------------------------------------
+print("Training images:", x_train.shape)
+print("Training labels:", y_train.shape)
+print("Testing images:", x_test.shape)
+print("Testing labels:", y_test.shape)
+------------------------------------------------------------------------------------
+x_train = x_train / 255.0
+x_test = x_test / 255.0
+------------------------------------------------------------------------------------
+x_train = x_train.reshape(-1, 784)
+x_test = x_test.reshape(-1, 784)
+
+print("Training data shape:", x_train.shape)
+print("Testing data shape:", x_test.shape)
+------------------------------------------------------------------------------------
+model = tf.keras.Sequential([
+    tf.keras.layers.Input(shape=(784,)),
+    tf.keras.layers.Dense(128, activation='relu'),
+    tf.keras.layers.Dense(64, activation='relu'),
+    tf.keras.layers.Dense(10, activation='softmax')
+])
+------------------------------------------------------------------------------------
+model.summary()
+------------------------------------------------------------------------------------
+model.compile(
+    optimizer=tf.keras.optimizers.SGD(learning_rate=0.01),
+    loss='sparse_categorical_crossentropy',
+    metrics=['accuracy']
+)
+------------------------------------------------------------------------------------
+history = model.fit(
+    x_train,
+    y_train,
+    epochs=10,
+    batch_size=32,
+    validation_split=0.1
+)
+------------------------------------------------------------------------------------
+test_loss, test_accuracy = model.evaluate(x_test, y_test)
+
+print("Test Loss:", test_loss)
+print("Test Accuracy:", test_accuracy)
+------------------------------------------------------------------------------------
+plt.plot(history.history['loss'])
+
+plt.title('Training Loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+
+plt.show()
+------------------------------------------------------------------------------------
+plt.plot(history.history['accuracy'])
+
+plt.title('Training Accuracy')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+
+plt.show()
+------------------------------------------------------------------------------------
+plt.plot(history.history['accuracy'])
+plt.plot(history.history['val_accuracy'])
+
+plt.title('Training and Validation Accuracy')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+
+plt.legend(['Training Accuracy', 'Validation Accuracy'])
+
+plt.show()
+------------------------------------------------------------------------------------
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+
+plt.title('Training and Validation Loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+
+plt.legend(['Training Loss', 'Validation Loss'])
+
+plt.show()
+------------------------------------------------------------------------------------
+predictions = model.predict(x_test)
+
+predicted_digit = np.argmax(predictions[0])
+
+print("Predicted digit:", predicted_digit)
+print("Actual digit:", y_test[0])
+------------------------------------------------------------------------------------
+plt.imshow(x_test[0].reshape(28, 28), cmap='gray')
+plt.title("Predicted: " + str(predicted_digit))
+plt.axis('off')
+plt.show()
+-
+
+
+
